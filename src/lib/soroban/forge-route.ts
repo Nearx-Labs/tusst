@@ -2,6 +2,7 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { readJsonBody } from "@/lib/http/read-json";
 import { checkRateLimit, clientKeyFor } from "./rate-limit";
 import { runForge } from "./runner";
 import type { ForgeEvent, ForgeMode } from "./types";
@@ -60,23 +61,19 @@ export function createForgeOptionsHandler() {
 export function createForgeHandler(mode: ForgeMode) {
   return async function POST(req: Request): Promise<Response> {
     const cors = corsHeaders(req);
-    const contentLength = Number(req.headers.get("content-length") ?? 0);
-    if (contentLength > MAX_BODY_BYTES) {
-      return NextResponse.json(
-        { error: "Project too large (512KB max)." },
-        { status: 413, headers: cors },
-      );
+    const parsed = await readJsonBody(req, MAX_BODY_BYTES);
+    if (!parsed.ok) {
+      return parsed.reason === "too_large"
+        ? NextResponse.json(
+            { error: "Project too large (512KB max)." },
+            { status: 413, headers: cors },
+          )
+        : NextResponse.json(
+            { error: "Invalid JSON body." },
+            { status: 400, headers: cors },
+          );
     }
-
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch {
-      return NextResponse.json(
-        { error: "Invalid JSON body." },
-        { status: 400, headers: cors },
-      );
-    }
+    const body = parsed.value;
     const { files } = (body ?? {}) as { files?: unknown };
     const validated = validateFiles(files);
     if (!validated.ok) {

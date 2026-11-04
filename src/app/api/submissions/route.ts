@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
+import { readJsonBody } from "@/lib/http/read-json";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { gradeSubmission } from "@/lib/validate";
@@ -20,22 +21,17 @@ export async function POST(req: Request) {
   const session = await auth();
   const userId = session?.user?.id;
 
-  // Reject oversized requests before buffering the body. (Chunked bodies
-  // without a length still get the per-field cap below.)
-  const contentLength = Number(req.headers.get("content-length") ?? 0);
-  if (contentLength > MAX_BODY_BYTES) {
-    return NextResponse.json(
-      { error: "Submission too large (64KB max)." },
-      { status: 413 },
-    );
+  // Reject oversized requests while streaming the body, with or without a length.
+  const parsed = await readJsonBody(req, MAX_BODY_BYTES);
+  if (!parsed.ok) {
+    return parsed.reason === "too_large"
+      ? NextResponse.json(
+          { error: "Submission too large (64KB max)." },
+          { status: 413 },
+        )
+      : NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
-  }
+  const body = parsed.value;
 
   const { lessonSlug, code } = (body ?? {}) as {
     lessonSlug?: unknown;

@@ -11,6 +11,7 @@
     "check:i18n": "tsx scripts/check-i18n.ts",
     "check:overworld": "tsx scripts/check-overworld.ts",
     "test:overworld": "tsx --test src/lib/overworld/graph.test.ts",
+    "test:unit": "tsx --test src/lib/http/read-json.test.ts src/lib/soroban/line-buffer.test.ts",
     "check:forge-pins": "node scripts/check-forge-pins.mjs",
     "check:spp": "tsx scripts/check-spp-liveness.ts",
     "check:advanced": "tsx --conditions=react-server scripts/check-advanced.ts",

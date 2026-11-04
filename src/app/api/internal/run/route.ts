@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { runInSandbox } from "@/lib/runner";
+import { readJsonBody } from "@/lib/http/read-json";
 
 // Internal grading endpoint — the runner-host half of the lesson-grading
 // split (see runRemote in src/lib/runner.ts). Serves ONLY when this instance
@@ -10,6 +11,7 @@ import { runInSandbox } from "@/lib/runner";
 
 const MAX_CODE_BYTES = 64 * 1024;
 const MAX_CHECKS_BYTES = 256 * 1024;
+const MAX_BODY_BYTES = 1024 * 1024;
 
 const SECRET = process.env.RUNNER_SHARED_SECRET ?? "";
 const IS_RUNNER = SECRET !== "" && !process.env.RUNNER_REMOTE_URL;
@@ -25,12 +27,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  const parsed = await readJsonBody(req, MAX_BODY_BYTES);
+  if (!parsed.ok) {
+    return parsed.reason === "too_large"
+      ? NextResponse.json({ error: "Request too large." }, { status: 413 })
+      : NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
+  const body = parsed.value;
   const { code, checks } = (body ?? {}) as { code?: unknown; checks?: unknown };
   if (
     typeof code !== "string" ||

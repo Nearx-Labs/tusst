@@ -7,6 +7,7 @@ import { verifyOnChain } from "@/lib/labs/verify";
 import { awardXp } from "@/lib/xp-award";
 import { XP_LAB } from "@/lib/xp";
 import type { LabArtifacts } from "@/content/labs/types";
+import { readJsonBody } from "@/lib/http/read-json";
 
 // Lab completion claim. The client presents an address + artifacts; the
 // server reads the chain itself (src/lib/labs/verify.ts) before persisting
@@ -28,17 +29,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const contentLength = Number(req.headers.get("content-length") ?? 0);
-  if (contentLength > MAX_BODY_BYTES) {
-    return NextResponse.json({ error: "Body too large." }, { status: 413 });
+  const parsed = await readJsonBody(req, MAX_BODY_BYTES);
+  if (!parsed.ok) {
+    return parsed.reason === "too_large"
+      ? NextResponse.json({ error: "Body too large." }, { status: 413 })
+      : NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
-  }
+  const body = parsed.value;
   const { labSlug, address, artifacts } = (body ?? {}) as {
     labSlug?: unknown;
     address?: unknown;

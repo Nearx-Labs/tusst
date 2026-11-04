@@ -13,6 +13,7 @@ import {
 import { checkMentorQuota } from "@/lib/mentor/rate-limit";
 import { awardXp } from "@/lib/xp-award";
 import { XP_CONCEPT_EXERCISE } from "@/lib/xp";
+import { readJsonBody } from "@/lib/http/read-json";
 
 // The live spec-write exercise: the student writes a SPEC, the mentor
 // provider judges it against the chapter's rubric with a strict JSON
@@ -24,6 +25,7 @@ import { XP_CONCEPT_EXERCISE } from "@/lib/xp";
 
 const MAX_SPEC_CHARS = 6_000;
 const MIN_SPEC_CHARS = 80;
+const MAX_BODY_BYTES = 32 * 1024;
 
 export const maxDuration = 30;
 
@@ -61,12 +63,13 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  const parsed = await readJsonBody(req, MAX_BODY_BYTES);
+  if (!parsed.ok) {
+    return parsed.reason === "too_large"
+      ? NextResponse.json({ error: "Request too large." }, { status: 413 })
+      : NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
+  const body = parsed.value;
   const { conceptSlug, spec } = (body ?? {}) as {
     conceptSlug?: unknown;
     spec?: unknown;

@@ -42,5 +42,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid submission." }, { status: 400 });
   }
 
-  return NextResponse.json(await runInSandbox(code, checks));
+  return NextResponse.json(await runInSandbox(code, checks, req.signal));
 }

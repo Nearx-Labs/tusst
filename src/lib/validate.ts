@@ -35,6 +35,7 @@ function outputsMatch(actual: string, expected: string): boolean {
 export async function gradeSubmission(
   lessonSlug: string,
   code: string,
+  signal?: AbortSignal,
 ): Promise<Verdict | undefined> {
   const content = getLessonContent(lessonSlug);
   if (!content) return undefined;
@@ -68,7 +69,11 @@ export async function gradeSubmission(
 
   // Real grading: AST checks + compile + run in the hardened sandbox, then
   // compare stdout. All feedback comes back in one container round trip.
-  const run = await runInSandbox(code, serializeChecks(content.astChecks));
+  const run = await runInSandbox(
+    code,
+    serializeChecks(content.astChecks),
+    signal,
+  );
 
   if (!run.ok) {
     // Infra trouble, not a wrong answer — the API surfaces a retryable 503.

@@ -13,6 +13,7 @@ import {
 import { getLocale } from "@/i18n/server";
 import { awardXp } from "@/lib/xp-award";
 import { XP_CONCEPT } from "@/lib/xp";
+import { readJsonBody } from "@/lib/http/read-json";
 
 // The test-out paper: GET one, POST it back to be marked.
 //
@@ -23,6 +24,8 @@ import { XP_CONCEPT } from "@/lib/xp";
 //
 // Reading a paper is open (same as reading a chapter signed out); sealing one
 // needs an account, because that is where XP lands.
+
+const MAX_BODY_BYTES = 8 * 1024;
 
 function parseTarget(searchParams: URLSearchParams) {
   const scope = searchParams.get("scope");
@@ -69,12 +72,13 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  const parsed = await readJsonBody(req, MAX_BODY_BYTES);
+  if (!parsed.ok) {
+    return parsed.reason === "too_large"
+      ? NextResponse.json({ error: "Request too large." }, { status: 413 })
+      : NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
+  const body = parsed.value;
   const { scope, target, nonce, picks } = (body ?? {}) as {
     scope?: unknown;
     target?: unknown;

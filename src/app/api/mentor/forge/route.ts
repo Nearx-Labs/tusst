@@ -10,6 +10,7 @@ import {
 import { buildForgeMentorMessages } from "@/lib/mentor/prompt";
 import { checkMentorQuota } from "@/lib/mentor/rate-limit";
 import { searchRavenDocs } from "@/lib/mentor/raven";
+import { readJsonBody } from "@/lib/http/read-json";
 
 // AI mentor for the Forge IDE: one Socratic hint about a failed build/test/
 // audit run. Unlike lesson hints there is no server-side submission to read
@@ -36,17 +37,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const contentLength = Number(req.headers.get("content-length") ?? 0);
-  if (contentLength > MAX_BODY_BYTES) {
-    return NextResponse.json({ error: "Request too large." }, { status: 413 });
+  const parsed = await readJsonBody(req, MAX_BODY_BYTES);
+  if (!parsed.ok) {
+    return parsed.reason === "too_large"
+      ? NextResponse.json({ error: "Request too large." }, { status: 413 })
+      : NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
-  }
+  const body = parsed.value;
   const { mode, files, log } = (body ?? {}) as {
     mode?: unknown;
     files?: unknown;

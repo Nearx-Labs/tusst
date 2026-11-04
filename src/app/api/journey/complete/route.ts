@@ -5,10 +5,13 @@ import { prisma } from "@/lib/db";
 import { conceptBySlug } from "@/content/journey";
 import { awardXp } from "@/lib/xp-award";
 import { XP_CONCEPT } from "@/lib/xp";
+import { readJsonBody } from "@/lib/http/read-json";
 
 // Seal a journey chapter. Quiz/fill steps are client-validated (same trust
 // model as the campaign's non-editor steps); the XpEvent ledger's unique
 // constraint makes the reward replay-proof, and the stakes are XP_CONCEPT.
+
+const MAX_BODY_BYTES = 4 * 1024;
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -20,12 +23,13 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
+  const parsed = await readJsonBody(req, MAX_BODY_BYTES);
+  if (!parsed.ok) {
+    return parsed.reason === "too_large"
+      ? NextResponse.json({ error: "Request too large." }, { status: 413 })
+      : NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
+  const body = parsed.value;
   const { conceptSlug } = (body ?? {}) as { conceptSlug?: unknown };
   if (typeof conceptSlug !== "string") {
     return NextResponse.json(

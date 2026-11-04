@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { createLineSplitter, MAX_LINE_BYTES, MAX_RAW_OUTPUT_BYTES } from "./line-buffer";
 import type { ForgeEvent, ForgeMode, SorobanFileMap } from "./types";
 
 // Hardened Docker execution for the Forge IDE (compile / test / audit).
@@ -153,7 +154,7 @@ export async function* runForge(
     signal?.addEventListener("abort", onAbort);
 
     // Line-by-line marker parser fed by both stdout and stderr.
-    let pending = "";
+    let outputExceeded = false;
     let logLines = 0;
     let logBytes = 0;
     let truncated = false;
@@ -215,21 +216,36 @@ export async function* runForge(
       channel.push({ t: "log", line: sanitizeLine(line) });
     };
 
-    const onChunk = (chunk: Buffer) => {
-      pending += chunk.toString("utf8");
-      for (;;) {
-        const nl = pending.indexOf("\n");
-        if (nl === -1) break;
-        handleLine(pending.slice(0, nl).replace(/\r$/, ""));
-        pending = pending.slice(nl + 1);
-      }
-    };
+    const splitter = createLineSplitter({
+      maxLineBytes: MAX_LINE_BYTES,
+      maxTotalBytes: MAX_RAW_OUTPUT_BYTES,
+      isLineLimitExempt: () => collectingWasm,
+      onLine: handleLine,
+      onOverlongLine: () => {
+        if (truncated) return;
+        logLines++;
+        channel.push({
+          t: "log",
+          line: "… a line exceeded 64KB and was truncated …",
+        });
+      },
+      onTotalExceeded: () => {
+        outputExceeded = true;
+        channel.push({
+          t: "log",
+          line: "… output exceeded 16MB and the run was stopped …",
+        });
+        kill();
+        channel.close();
+      },
+    });
+    const onChunk = (chunk: Buffer) => splitter.push(chunk);
     child.stdout.on("data", onChunk);
     child.stderr.on("data", onChunk);
 
     child.on("error", () => channel.close());
     child.on("close", () => {
-      if (pending.length > 0) handleLine(pending);
+      splitter.flush();
       channel.close();
     });
 
@@ -249,10 +265,12 @@ export async function* runForge(
     const r = result as { ok: boolean; timedOut: boolean } | null;
     yield {
       t: "done",
-      ok: r?.ok === true && sawEnd,
-      timedOut: r?.timedOut === true || (killedByWallTimeout && r === null),
+      ok: !outputExceeded && r?.ok === true && sawEnd,
+      timedOut:
+        !outputExceeded &&
+        (r?.timedOut === true || (killedByWallTimeout && r === null)),
       // No end marker and no wall-timeout kill → docker/image trouble.
-      infraError: !sawEnd && !killedByWallTimeout,
+      infraError: !outputExceeded && !sawEnd && !killedByWallTimeout,
     };
   } finally {
     release();

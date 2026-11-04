@@ -15,6 +15,7 @@ import { buildMentorMessages } from "@/lib/mentor/prompt";
 import { checkMentorQuota } from "@/lib/mentor/rate-limit";
 import { searchRavenDocs } from "@/lib/mentor/raven";
 import { extractStaticHints } from "@/lib/mentor/static-hints";
+import { readJsonBody } from "@/lib/http/read-json";
 
 // AI mentor: one Socratic hint for the student's latest failed submission.
 //
@@ -63,17 +64,13 @@ export async function POST(req: Request) {
     );
   }
 
-  const contentLength = Number(req.headers.get("content-length") ?? 0);
-  if (contentLength > MAX_BODY_BYTES) {
-    return NextResponse.json({ error: "Request too large." }, { status: 413 });
+  const parsed = await readJsonBody(req, MAX_BODY_BYTES);
+  if (!parsed.ok) {
+    return parsed.reason === "too_large"
+      ? NextResponse.json({ error: "Request too large." }, { status: 413 })
+      : NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
-
-  let body: unknown;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
-  }
+  const body = parsed.value;
   const { lessonSlug } = (body ?? {}) as { lessonSlug?: unknown };
   if (typeof lessonSlug !== "string") {
     return NextResponse.json(

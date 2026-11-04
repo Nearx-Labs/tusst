@@ -306,10 +306,23 @@ Environment variables:
 | `AUTH_GITHUB_ID/SECRET`, `AUTH_DISCORD_ID/SECRET`, `AUTH_EMAIL_SERVER/FROM` | login providers (register two OAuth apps: dev callback on localhost, prod on the real domain) |
 | `RUNNER_MODE` | `docker` or `regex` — lessons only; the Forge always uses Docker |
 | `AUTH_DEV_LOGIN` | **local dev only** — never set in production |
+| `TRUSTED_PROXY_HOPS` | integer 0–10, default `0` — reverse proxies in front of `npm start` whose `X-Forwarded-For` entries are trusted for the anonymous rate-limit key; ignored on Vercel |
 
 The Forge needs **no env vars**: testnet endpoints (RPC, Horizon, Friendbot,
 network passphrase) are public constants in `src/lib/stellar/network.ts`,
 and rate limiting is in-process.
+
+Rate limits key signed-in users by user id and anonymous callers by client IP
+(`src/lib/client-ip.ts`, IPv6 grouped by /64). On Vercel the platform header
+`x-vercel-forwarded-for` (fallback `x-real-ip`) is used and
+`TRUSTED_PROXY_HOPS` is ignored. On the VPS, set `TRUSTED_PROXY_HOPS` to the
+number of trusted reverse proxies in front of `npm start` (e.g. `1` for a
+single nginx/Caddy); the key is the N-th `X-Forwarded-For` entry from the
+right, so the proxy must append to `X-Forwarded-For` (or overwrite it) and the
+app port must not be reachable directly. With the default `0`, forwarded
+headers are ignored and all anonymous callers share one bucket (`ip:unknown`):
+safe against spoofing, but one anonymous client can exhaust it for every other
+anonymous client; signed-in users are unaffected.
 
 ## 5. Security Considerations
 

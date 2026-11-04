@@ -11,44 +11,42 @@ import "server-only";
 //                     (GitHub Models mini models: ~150 requests/day).
 
 import { prisma } from "@/lib/db";
+import {
+  finalizeMentorReservation,
+  peekMentorRemaining,
+  releaseMentorReservation,
+  reserveMentorQuota,
+  type MentorReservation,
+  type MentorReservationInput,
+} from "@/lib/mentor/quota";
 
-export const LESSON_DAILY_LIMIT = 3;
-export const USER_DAILY_LIMIT = 10;
-export const GLOBAL_DAILY_LIMIT = 120;
-
-export type MentorQuota =
-  | { allowed: true; remaining: number }
-  | { allowed: false; scope: "lesson" | "user" | "global" };
+export {
+  GLOBAL_DAILY_LIMIT,
+  LESSON_DAILY_LIMIT,
+  USER_DAILY_LIMIT,
+  type MentorReservation,
+  type MentorReservationInput,
+} from "@/lib/mentor/quota";
 
 // Forge hints pass lessonId null — they only count toward the per-user and
 // global fences (the per-lesson cap is a lesson-pedagogy rule).
-export async function checkMentorQuota(
+export function reserveQuota(
+  input: MentorReservationInput,
+): Promise<MentorReservation> {
+  return reserveMentorQuota(prisma, input);
+}
+
+export function mentorRemaining(
   userId: string,
   lessonId: string | null,
-): Promise<MentorQuota> {
-  const dayStart = new Date();
-  dayStart.setUTCHours(0, 0, 0, 0);
-  const today = { createdAt: { gte: dayStart } };
+): Promise<number> {
+  return peekMentorRemaining(prisma, userId, lessonId);
+}
 
-  const [lessonCount, userCount, globalCount] = await Promise.all([
-    lessonId
-      ? prisma.mentorHint.count({ where: { userId, lessonId, ...today } })
-      : Promise.resolve(0),
-    prisma.mentorHint.count({ where: { userId, ...today } }),
-    prisma.mentorHint.count({ where: today }),
-  ]);
+export function finalizeReservation(id: string, hint: string): Promise<void> {
+  return finalizeMentorReservation(prisma, id, hint);
+}
 
-  if (globalCount >= GLOBAL_DAILY_LIMIT) return { allowed: false, scope: "global" };
-  if (userCount >= USER_DAILY_LIMIT) return { allowed: false, scope: "user" };
-  if (lessonId && lessonCount >= LESSON_DAILY_LIMIT) {
-    return { allowed: false, scope: "lesson" };
-  }
-
-  const remaining = USER_DAILY_LIMIT - userCount;
-  return {
-    allowed: true,
-    remaining: lessonId
-      ? Math.min(LESSON_DAILY_LIMIT - lessonCount, remaining)
-      : remaining,
-  };
+export function releaseReservation(id: string): Promise<void> {
+  return releaseMentorReservation(prisma, id);
 }

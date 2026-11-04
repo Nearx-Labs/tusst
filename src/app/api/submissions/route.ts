@@ -8,9 +8,20 @@ import { acts } from "@/content/campaign";
 import { getUnlockedActCount } from "@/lib/unlock";
 import { awardXp, type XpAwardOutcome } from "@/lib/xp-award";
 import { XP_LESSON } from "@/lib/xp";
+import { clientKeyFor, createRateLimiter } from "@/lib/rate-limit";
 
 const MAX_CODE_BYTES = 64 * 1024;
 const MAX_BODY_BYTES = 80 * 1024; // code + JSON envelope
+
+const RATE_WINDOW_MS = 60_000;
+const SIGNED_LIMIT_PER_WINDOW = 10;
+const ANON_LIMIT_PER_WINDOW = 5;
+
+const submissionLimiter = createRateLimiter({
+  windowMs: RATE_WINDOW_MS,
+  anonLimit: ANON_LIMIT_PER_WINDOW,
+  signedLimit: SIGNED_LIMIT_PER_WINDOW,
+});
 
 // Grading may proxy to the remote runner (45s budget) — keep the function
 // alive past serverless defaults.
@@ -64,6 +75,17 @@ export async function POST(req: Request) {
     );
   }
 
+  const retryIn = submissionLimiter.check(
+    clientKeyFor(req, userId ?? null),
+    Boolean(userId),
+  );
+  if (retryIn !== null) {
+    return NextResponse.json(
+      { error: `Slow down — the forge needs a breather. Try again in ${retryIn}s.` },
+      { status: 429, headers: { "retry-after": String(retryIn) } },
+    );
+  }
+
   const lesson = await prisma.lesson.findUnique({
     where: { slug: lessonSlug },
     include: { track: { select: { status: true, slug: true } } },
@@ -83,7 +105,7 @@ export async function POST(req: Request) {
     }
   }
 
-  const verdict = await gradeSubmission(lessonSlug, code);
+  const verdict = await gradeSubmission(lessonSlug, code, req.signal);
   if (!verdict) {
     return NextResponse.json(
       { error: "This lesson isn't playable yet." },

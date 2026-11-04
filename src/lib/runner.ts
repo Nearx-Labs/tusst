@@ -1,6 +1,7 @@
 import "server-only";
 
 import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { chmod, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -122,7 +123,11 @@ const FAILURE: SandboxResult = {
 const REMOTE_URL = (process.env.RUNNER_REMOTE_URL ?? "").replace(/\/+$/, "");
 const REMOTE_TIMEOUT_MS = 45_000;
 
-async function runRemote(code: string, checksJson?: string): Promise<SandboxResult> {
+async function runRemote(
+  code: string,
+  checksJson?: string,
+  signal?: AbortSignal,
+): Promise<SandboxResult> {
   try {
     const res = await fetch(`${REMOTE_URL}/api/internal/run`, {
       method: "POST",
@@ -131,7 +136,9 @@ async function runRemote(code: string, checksJson?: string): Promise<SandboxResu
         "x-runner-secret": process.env.RUNNER_SHARED_SECRET ?? "",
       },
       body: JSON.stringify({ code, checks: checksJson }),
-      signal: AbortSignal.timeout(REMOTE_TIMEOUT_MS),
+      signal: signal
+        ? AbortSignal.any([signal, AbortSignal.timeout(REMOTE_TIMEOUT_MS)])
+        : AbortSignal.timeout(REMOTE_TIMEOUT_MS),
       cache: "no-store",
     });
     if (!res.ok) return FAILURE;
@@ -148,14 +155,28 @@ async function runRemote(code: string, checksJson?: string): Promise<SandboxResu
 export async function runInSandbox(
   code: string,
   checksJson?: string,
+  signal?: AbortSignal,
 ): Promise<SandboxResult> {
-  if (REMOTE_URL) return runRemote(code, checksJson);
+  if (signal?.aborted) return { ...FAILURE };
+  if (REMOTE_URL) return runRemote(code, checksJson, signal);
 
   const failure: SandboxResult = { ...FAILURE };
 
   await acquire();
-  const dir = await mkdtemp(join(tmpdir(), "tusst-sub-"));
+  if (signal?.aborted) {
+    release();
+    return failure;
+  }
+  const containerName = `tusst-lesson-${randomUUID()}`;
+  let killed = false;
+  const kill = () => {
+    if (killed) return;
+    killed = true;
+    spawn("docker", ["kill", containerName], { stdio: "ignore" }).on("error", () => {});
+  };
+  let dir: string | undefined;
   try {
+    dir = await mkdtemp(join(tmpdir(), "tusst-sub-"));
     // mkdtemp creates 0700; the container's non-root user must traverse the
     // bind mount (Docker Desktop masks ownership, native Linux does not).
     await chmod(dir, 0o755);
@@ -165,6 +186,7 @@ export async function runInSandbox(
       const child = spawn("docker", [
         "run",
         "--rm",
+        "--name", containerName,
         "-i", // check spec arrives on stdin
         "--network", "none",
         "--read-only",
@@ -184,19 +206,31 @@ export async function runInSandbox(
         if (!settled) {
           settled = true;
           clearTimeout(wall);
+          signal?.removeEventListener("abort", onAbort);
           resolve(value);
         }
       };
       const wall = setTimeout(() => {
         child.kill("SIGKILL");
+        kill();
         settle(null);
       }, WALL_TIMEOUT_MS);
+      const onAbort = () => {
+        child.kill("SIGKILL");
+        kill();
+        settle(null);
+      };
+      signal?.addEventListener("abort", onAbort);
+      if (signal?.aborted) onAbort();
 
       child.stdout.on("data", (chunk: Buffer) => {
         if (out.length < MAX_OUTPUT_BYTES) out += chunk.toString("utf8");
       });
       child.stderr.resume(); // drain, discard
-      child.on("error", () => settle(null)); // docker binary missing
+      child.on("error", () => {
+        kill();
+        settle(null); // docker binary missing
+      });
       child.on("close", (exitCode) => {
         // The runner always exits 0; non-zero means infra trouble (daemon
         // down, image missing).
@@ -226,7 +260,8 @@ export async function runInSandbox(
   } catch {
     return failure;
   } finally {
+    kill();
     release();
-    rm(dir, { recursive: true, force: true }).catch(() => {});
+    if (dir) rm(dir, { recursive: true, force: true }).catch(() => {});
   }
 }

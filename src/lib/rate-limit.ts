@@ -1,5 +1,7 @@
 import "server-only";
 
+import { clientIpConfigFromEnv, clientKeyFromHeaders } from "./client-ip";
+
 interface Bucket {
   count: number;
   resetAt: number;
@@ -61,10 +63,7 @@ export function createRateLimiter(options: RateLimiterOptions): RateLimiter {
   };
 }
 
-/** Client key for rate limiting: user id when signed in, else best-effort IP. */
+/** Client key for rate limiting: user id when signed in, else the trusted client IP, else one shared anonymous bucket. */
 export function clientKeyFor(req: Request, userId: string | null): string {
-  if (userId) return `user:${userId}`;
-  const forwarded = req.headers.get("x-forwarded-for");
-  const ip = forwarded?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "local";
-  return `ip:${ip}`;
+  return clientKeyFromHeaders(req.headers, userId, clientIpConfigFromEnv(process.env));
 }

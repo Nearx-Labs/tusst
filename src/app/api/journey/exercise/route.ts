@@ -10,7 +10,7 @@ import {
   mentorModel,
   type MentorMessage,
 } from "@/lib/mentor/provider";
-import { checkMentorQuota } from "@/lib/mentor/rate-limit";
+import { finalizeReservation, reserveQuota } from "@/lib/mentor/rate-limit";
 import { awardXp } from "@/lib/xp-award";
 import { XP_CONCEPT_EXERCISE } from "@/lib/xp";
 
@@ -99,10 +99,19 @@ export async function POST(req: Request) {
       { status: 503 },
     );
   }
-  const quota = await checkMentorQuota(userId, null);
-  if (!quota.allowed) {
+  const reservation = await reserveQuota({
+    userId,
+    lessonId: null,
+    kind: "journey",
+    locale,
+    model: mentorModel(),
+  });
+  if (reservation.status !== "reserved") {
     return NextResponse.json(
-      { error: "rate_limited", scope: quota.scope },
+      {
+        error: "rate_limited",
+        scope: reservation.status === "limited" ? reservation.scope : "user",
+      },
       { status: 429 },
     );
   }
@@ -139,15 +148,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "unavailable" }, { status: 503 });
   }
 
-  await prisma.mentorHint.create({
-    data: {
-      userId,
-      kind: "journey",
-      locale,
-      hint: verdict.feedback,
-      model: mentorModel(),
-    },
-  });
+  await finalizeReservation(reservation.id, verdict.feedback);
 
   if (!verdict.meets) {
     return NextResponse.json({ meets: false, feedback: verdict.feedback });

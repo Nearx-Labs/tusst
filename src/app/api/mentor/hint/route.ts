@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { acts } from "@/content/campaign";
@@ -12,7 +11,12 @@ import {
   mentorModel,
 } from "@/lib/mentor/provider";
 import { buildMentorMessages } from "@/lib/mentor/prompt";
-import { checkMentorQuota } from "@/lib/mentor/rate-limit";
+import {
+  finalizeReservation,
+  mentorRemaining,
+  releaseReservation,
+  reserveQuota,
+} from "@/lib/mentor/rate-limit";
 import { searchRavenDocs } from "@/lib/mentor/raven";
 import { extractStaticHints } from "@/lib/mentor/static-hints";
 
@@ -128,81 +132,88 @@ export async function POST(req: Request) {
     );
   }
 
-  const quota = await checkMentorQuota(userId, lesson.id);
-
   // Cache before quota: re-asking about the same graded attempt is free and
   // never burns provider budget.
   const cached = await prisma.mentorHint.findUnique({
     where: { submissionId: submission.id },
     select: { hint: true },
   });
-  if (cached) {
+  if (cached?.hint) {
     return NextResponse.json({
       hint: cached.hint,
       cached: true,
-      remaining: quota.allowed ? quota.remaining : 0,
+      remaining: await mentorRemaining(userId, lesson.id),
     });
   }
 
-  if (!quota.allowed) {
+  const reservation = await reserveQuota({
+    userId,
+    lessonId: lesson.id,
+    kind: "lesson",
+    locale,
+    model: mentorModel(),
+    submissionId: submission.id,
+  });
+  if (reservation.status === "duplicate") {
+    if (reservation.hint) {
+      return NextResponse.json({
+        hint: reservation.hint,
+        cached: true,
+        remaining: await mentorRemaining(userId, lesson.id),
+      });
+    }
     return NextResponse.json(
-      { error: "rate_limited", scope: quota.scope, staticHints },
+      { error: "hint_in_progress", staticHints },
+      { status: 409 },
+    );
+  }
+  if (reservation.status === "limited") {
+    return NextResponse.json(
+      { error: "rate_limited", scope: reservation.scope, staticHints },
       { status: 429 },
     );
   }
 
-  // Stellar-domain lessons get grounding excerpts from the official docs via
-  // the Raven MCP (best-effort — null when unauthorized or unreachable).
-  const stellarDocs =
-    lesson.track.domain === "stellar"
-      ? await searchRavenDocs(`${lesson.title} (${lesson.track.slug})`)
-      : null;
+  let completion;
+  try {
+    // Stellar-domain lessons get grounding excerpts from the official docs via
+    // the Raven MCP (best-effort — null when unauthorized or unreachable).
+    const stellarDocs =
+      lesson.track.domain === "stellar"
+        ? await searchRavenDocs(`${lesson.title} (${lesson.track.slug})`)
+        : null;
 
-  const verdict = parseOutputLog(submission.outputLog);
-  const messages = buildMentorMessages({
-    locale,
-    instructions: content.instructions,
-    studentCode: submission.code,
-    failedChecks: verdict.results.filter((r) => !r.passed).map((r) => r.name),
-    output: verdict.output,
-    expectedOutput: content.expectedOutput,
-    stellarDocs,
-  });
-  if (process.env.NODE_ENV !== "production") {
-    console.debug("[mentor] prompt:\n", messages[1]?.content);
+    const verdict = parseOutputLog(submission.outputLog);
+    const messages = buildMentorMessages({
+      locale,
+      instructions: content.instructions,
+      studentCode: submission.code,
+      failedChecks: verdict.results.filter((r) => !r.passed).map((r) => r.name),
+      output: verdict.output,
+      expectedOutput: content.expectedOutput,
+      stellarDocs,
+    });
+    if (process.env.NODE_ENV !== "production") {
+      console.debug("[mentor] prompt:\n", messages[1]?.content);
+    }
+
+    completion = await chatCompletion(messages);
+  } catch (e) {
+    await releaseReservation(reservation.id);
+    throw e;
   }
-
-  const completion = await chatCompletion(messages);
   if (!completion.ok) {
+    await releaseReservation(reservation.id);
     return NextResponse.json(
       { error: completion.reason, staticHints },
       { status: completion.reason === "rate_limited" ? 429 : 503 },
     );
   }
 
-  try {
-    await prisma.mentorHint.create({
-      data: {
-        userId,
-        lessonId: lesson.id,
-        submissionId: submission.id,
-        locale,
-        hint: completion.text,
-        model: mentorModel(),
-      },
-    });
-  } catch (e) {
-    // Double-click race: a concurrent request persisted first. Its hint is
-    // equally valid — serve ours without a second row.
-    if (
-      !(e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002")
-    ) {
-      throw e;
-    }
-  }
+  await finalizeReservation(reservation.id, completion.text);
 
   return NextResponse.json({
     hint: completion.text,
-    remaining: quota.remaining - 1,
+    remaining: reservation.remaining,
   });
 }

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/db";
 import { getLocale } from "@/i18n/server";
 import {
   chatCompletion,
@@ -8,7 +7,7 @@ import {
   mentorModel,
 } from "@/lib/mentor/provider";
 import { buildForgeMentorMessages } from "@/lib/mentor/prompt";
-import { checkMentorQuota } from "@/lib/mentor/rate-limit";
+import { finalizeReservation, reserveQuota } from "@/lib/mentor/rate-limit";
 import { searchRavenDocs } from "@/lib/mentor/raven";
 
 // AI mentor for the Forge IDE: one Socratic hint about a failed build/test/
@@ -70,14 +69,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "mentor_unavailable" }, { status: 503 });
   }
 
-  const quota = await checkMentorQuota(userId, null);
-  if (!quota.allowed) {
-    return NextResponse.json(
-      { error: "rate_limited", scope: quota.scope },
-      { status: 429 },
-    );
-  }
-
   // lib.rs first — it's where the contract (and usually the error) lives.
   const fileList = Object.entries(files as Record<string, unknown>)
     .filter((e): e is [string, string] => typeof e[1] === "string")
@@ -92,6 +83,23 @@ export async function POST(req: Request) {
 
   const logTail = log.slice(-MAX_LOG_CHARS);
   const locale = await getLocale();
+
+  const reservation = await reserveQuota({
+    userId,
+    lessonId: null,
+    kind: "forge",
+    locale,
+    model: mentorModel(),
+  });
+  if (reservation.status !== "reserved") {
+    return NextResponse.json(
+      {
+        error: "rate_limited",
+        scope: reservation.status === "limited" ? reservation.scope : "user",
+      },
+      { status: 429 },
+    );
+  }
 
   // Forge is always Soroban — ground the hint on the docs when Raven is
   // authorized. Query from the first compiler error line, else the mode.
@@ -113,18 +121,10 @@ export async function POST(req: Request) {
     );
   }
 
-  await prisma.mentorHint.create({
-    data: {
-      userId,
-      kind: "forge",
-      locale,
-      hint: completion.text,
-      model: mentorModel(),
-    },
-  });
+  await finalizeReservation(reservation.id, completion.text);
 
   return NextResponse.json({
     hint: completion.text,
-    remaining: quota.remaining - 1,
+    remaining: reservation.remaining,
   });
 }

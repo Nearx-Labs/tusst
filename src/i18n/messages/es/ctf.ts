@@ -1,0 +1,62 @@
+export const ctf = {
+  metaTitle: "La Arena — TUSST",
+  metaDescription:
+    "Rompe contratos Soroban vulnerables. Lee el código, escribe el exploit y ejecútalo en la misma sandbox endurecida de la Forja.",
+  kicker: "la arena",
+  title: "Rompe el Contrato",
+  intro:
+    "Ethernaut para Soroban. Cada nivel es un contrato real con un bug real, una prueba oculta y una flag que solo cae cuando tu exploit funciona. Editas un archivo; la sandbox hace el resto.",
+  liveHeading: "// niveles",
+  card: {
+    minutes: "{minutes} min",
+    xp: "{xp} xp",
+    solved: "resuelto",
+    start: "Entrar al nivel",
+    replay: "Repetir",
+  },
+  difficulty: {
+    novice: "novato",
+    adept: "adepto",
+    master: "maestro",
+  },
+  trophies: {
+    heading: "Flags del CTF",
+    locked: "bloqueado",
+    solvedOn: "Superado el {date}",
+  },
+  player: {
+    copy: "Copiar flag",
+    copied: "Copiada",
+    back: "Volver a la Arena",
+    brief: "Informe",
+    files: "Archivos",
+    exploit: "exploit.rs",
+    locked: "solo lectura",
+    hints: "Pistas",
+    hint: "Revelar pista {n}",
+    run: "Ejecutar exploit",
+    running: "ejecutando en la sandbox…",
+    output: "Salida de la sandbox",
+    noOutput:
+      "Aún no hay salida. Lee el código, escribe el exploit y ejecútalo.",
+    solved: "Nivel superado",
+    failed: "El contrato resistió — lee la salida e inténtalo de nuevo.",
+    rejected: "No se ejecutó: «{token}» en la línea {line} está prohibido. El nivel cae con una llamada al contrato, no manipulando la prueba.",
+    timedOut:
+      "La sandbox agotó el tiempo. Inténtalo de nuevo en un momento.",
+    infraError: "La sandbox no responde. Inténtalo de nuevo en un momento.",
+    error: "error",
+    signInToClaim: "Inicia sesión para reclamar XP.",
+    signIn: "Iniciar sesión",
+    flagLabel: "Flag",
+    flagHint: "Guárdala. Es la prueba de que rompiste el nivel.",
+    xpEarned: "+{xp} xp",
+    xpTotal: "{xp} xp en total",
+    levelUp: "¡Nivel {level} alcanzado!",
+    already: "Ya reclamado.",
+    reset: "Restaurar el inicial",
+    exit: "Salir del nivel",
+    compileHint:
+      "Los errores de compilación aparecen en la salida de la sandbox.",
+  },
+};

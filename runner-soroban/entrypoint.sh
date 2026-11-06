@@ -1,7 +1,9 @@
 #!/bin/sh
-# Forge sandbox entrypoint — build | test | audit one mounted Soroban project.
+# Forge sandbox entrypoint — build | test | audit | ctf one mounted project.
 #
 # The user's project (Cargo.toml + src/**) is mounted read-only at /project.
+# CTF mode additionally mounts a server-authored tests/ctf.rs; the host builds
+# that map, so the player never sees the hidden test.
 # It is overlaid onto the warm workspace at /opt/warm, whose target/ already
 # holds every curated dependency pre-compiled — so runs work fully offline.
 # Writes land in the container's ephemeral layer and vanish with the container.
@@ -45,6 +47,14 @@ if [ ! -f /project/Cargo.toml ] || [ ! -d /project/src ]; then
   finish
 fi
 
+# CTF runs are assembled by the server: the hidden harness must be present,
+# otherwise this is an infrastructure error, not a player failure.
+if [ "$MODE" = "ctf" ] && [ ! -f /project/tests/ctf.rs ]; then
+  echo "internal: no hidden test mounted"
+  echo "__TUSST_FORGE__ result err 1"
+  finish
+fi
+
 cd "$WS" || { echo "internal: workspace missing"; echo "__TUSST_FORGE__ result err 1"; finish; }
 
 # Swap the warm sources for the user's project; deps stay warm in target/.
@@ -52,6 +62,13 @@ rm -rf "$WS/src"
 mkdir "$WS/src"
 cp /project/Cargo.toml "$WS/Cargo.toml"
 cp -R /project/src/. "$WS/src/"
+
+# The hidden integration test is injected only for CTF runs. Never leave a
+# stale tests/ from the warm image in place for build/test/audit.
+rm -rf "$WS/tests"
+if [ "$MODE" = "ctf" ]; then
+  cp -R /project/tests "$WS/tests"
+fi
 
 case "$MODE" in
   build)
@@ -62,6 +79,17 @@ case "$MODE" in
   test)
     echo "__TUSST_FORGE__ phase test"
     timeout -k 5 "$INNER_TIMEOUT" cargo test --color never 2>&1
+    STATUS=$?
+    ;;
+  ctf)
+    echo "__TUSST_FORGE__ phase test"
+    # Run exactly the hidden test. The host grades on the literal
+    # "test ctf_win ... ok" line, cargo's clean summary and the harness's
+    # per-run nonce line, on a run that also exited cleanly (the exit code is
+    # required, never sufficient). --show-output prints the
+    # captured stdout of a PASSING test, which is where that nonce line lives.
+    timeout -k 5 "$INNER_TIMEOUT" cargo test --color never \
+      --test ctf -- --exact ctf_win --show-output 2>&1
     STATUS=$?
     ;;
   audit)

@@ -4,7 +4,7 @@
 // denormalized aggregates. Award amounts live here so content, API routes
 // and UI all agree on the numbers.
 
-export type XpSource = "lesson" | "lab" | "journey";
+export type XpSource = "lesson" | "lab" | "journey" | "ctf";
 
 export const XP_LESSON = 25;
 export const XP_CONCEPT = 30;
@@ -14,6 +14,14 @@ export const XP_LAB: Record<"novice" | "adept" | "master", number> = {
   novice: 75,
   adept: 100,
   master: 150,
+};
+
+// CTF levels pay more than a guided lab: the player writes the exploit, and
+// the hidden harness either passes or it does not. Same difficulty scale.
+export const XP_CTF: Record<"novice" | "adept" | "master", number> = {
+  novice: 125,
+  adept: 175,
+  master: 250,
 };
 
 /**

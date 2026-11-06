@@ -4,6 +4,7 @@ import { advanced } from "./advanced";
 import { armory } from "./armory";
 import { auth } from "./auth";
 import { common } from "./common";
+import { ctf } from "./ctf";
 import { home } from "./home";
 import { ide } from "./ide";
 import { journey } from "./journey";
@@ -17,4 +18,4 @@ import { visuals } from "./visuals";
 
 // Tradução pt-BR: espelha a estrutura de arquivos de ../en; o tipo `Messages`
 // garante que nenhuma chave falte ou sobre.
-export const pt: Messages = { advanced, armory, auth, common, home, ide, journey, labs, landing, legal, lesson, overworld, pages, visuals };
+export const pt: Messages = { advanced, armory, auth, common, ctf, home, ide, journey, labs, landing, legal, lesson, overworld, pages, visuals };

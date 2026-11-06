@@ -4,6 +4,7 @@ import { advanced } from "./advanced";
 import { armory } from "./armory";
 import { auth } from "./auth";
 import { common } from "./common";
+import { ctf } from "./ctf";
 import { home } from "./home";
 import { ide } from "./ide";
 import { journey } from "./journey";
@@ -15,4 +16,4 @@ import { overworld } from "./overworld";
 import { pages } from "./pages";
 import { visuals } from "./visuals";
 
-export const fr: Messages = { advanced, armory, auth, common, home, ide, journey, labs, landing, legal, lesson, overworld, pages, visuals };
+export const fr: Messages = { advanced, armory, auth, common, ctf, home, ide, journey, labs, landing, legal, lesson, overworld, pages, visuals };

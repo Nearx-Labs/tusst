@@ -117,6 +117,40 @@ setup, no faucet hunting.**
 The Forge footer says it best: *in memory of James Bachini — the Forge carries on the
 legacy of his Soroban Playground.*
 
+## The Gauntlet — an off-chain CTF
+
+[`/ctf`](https://tusst.xyz/ctf) is Ethernaut for Soroban. Each level ships a small,
+deliberately vulnerable contract you can read in full. You write the exploit in the one
+editable file (`src/exploit.rs`) and run it; the server assembles the project, injects a
+hidden integration test and grades it in the same hardened, offline Forge sandbox.
+
+- **No per-player chain instances** — the level is a deterministic Rust test, so runs are
+  keyless, cheap and reproducible.
+- **The flag is never in the sandbox** — only the server knows it, and it is returned only
+  after a run passes grading. The exploit shares a process with the hidden test, so it could
+  otherwise print a win itself; three layers stop that: a source guard refuses exploits that
+  touch `std`, `unsafe`, `include_str!`, `as_contract`, `register_at` or auth mocks before
+  anything runs; the level's `lib.rs` puts `#[forbid(unsafe_code)]` on `exploit.rs`; and a win
+  needs a per-run nonce that only the hidden harness knows, on top of cargo's win line and a
+  clean `test result: ok` summary. In-process grading is not airtight — a guard bypass is the
+  residual risk, and it is worth one XP award per user and level.
+- **Anonymous players can solve and see the flag**; signing in persists progress and pays
+  CTF XP (`novice` 125, `adept` 175, `master` 250) once per level.
+- Six levels so far, each a bug class from real Soroban audits (see the
+  [Stellar Security Portal](https://stellarsecurityportal.com/vulnerabilities)), ordered by difficulty:
+  *The Open Gate* (missing `require_auth`), *The Second Coming* (re-runnable `initialize`),
+  *The Borrowed Badge* (auth on a caller-supplied admin never compared to the stored one),
+  *Negative Space* (unchecked negative amounts), *The Dust Mill* (rounding in the depositor's favour)
+  and *The Forgotten Ledger* (an init guard in storage that expires).
+
+Level content lives in `src/content/ctf` and is server-only (`harness`, `reference` and
+`flag` never reach the browser). Add a level by dropping a module in
+`src/content/ctf/levels` (reuse `shared.ts` for `Cargo.toml` and `lib.rs`), adding its four translation
+overlays in `src/content/ctf/i18n`, and listing it in `src/content/ctf/index.ts`. `npm run check:ctf` proves it
+in the sandbox and checks the translations. A level's harness
+must end with `println!("CTF_WIN __CTF_NONCE__");` (the server swaps in a fresh nonce per run)
+and the starter must keep the fixed `pub fn solve(…)` signature.
+
 ## The Raven — an AI mentor that won't do your homework
 
 Fail a skirmish and you can ask the Raven 🐦‍⬛ for a hint. It reads your graded submission
@@ -192,6 +226,8 @@ tier) and the hint button appears; leave it unset and the feature hides itself. 
 | `npm run db:reset` | Drop, re-migrate, re-seed |
 | `npm run runner:build` | Build the lesson-grading sandbox image |
 | `npm run runner:soroban:build` | Build the Forge (Soroban) sandbox image |
+| `npm run check:ctf` | Verify every Gauntlet level in the sandbox: reference passes, starter fails, known cheats are refused and don't win (`-- --strict` fails instead of skipping without Docker) |
+| `npm run test:ctf` | Unit tests for the CTF source guard and grading (no Docker) |
 
 ### Environment variables
 

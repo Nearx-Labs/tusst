@@ -11,6 +11,7 @@ export const common = {
     advanced: "ileri seviye",
     armory: "cephanelik",
     forge: "forge",
+    ctf: "arena",
     signOut: "çıkış",
     signIn: "giriş",
     profile: "profil",

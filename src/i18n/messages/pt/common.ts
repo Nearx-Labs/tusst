@@ -11,6 +11,7 @@ export const common = {
     advanced: "avançado",
     armory: "arsenal",
     forge: "forja",
+    ctf: "arena",
     signOut: "sair",
     signIn: "entrar",
     profile: "perfil",

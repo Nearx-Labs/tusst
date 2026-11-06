@@ -33,6 +33,7 @@ const RUNNING_STATUS: Record<ForgeMode, ForgeRunStatus> = {
   build: "building",
   test: "testing",
   audit: "auditing",
+  ctf: "testing",
 };
 
 export function useForgeRun() {

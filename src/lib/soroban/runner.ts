@@ -28,6 +28,9 @@ const WALL_TIMEOUT_MS: Record<ForgeMode, number> = {
   build: 180_000,
   test: 240_000,
   audit: 240_000,
+  // The CTF harness is an integration test: same compile cost as `test`,
+  // plus the hidden test's own runtime.
+  ctf: 240_000,
 };
 const MAX_LOG_LINES = 2_000;
 const MAX_LOG_BYTES = 512 * 1024;

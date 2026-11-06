@@ -30,6 +30,7 @@ export function NavMenu({
     { href: "/path", label: m.common.nav.hall },
     ...(journeyLive ? [{ href: "/journey", label: m.common.nav.journey }] : []),
     { href: "/labs", label: m.common.nav.forge },
+    { href: "/ctf", label: m.common.nav.ctf },
     { href: "/campaign", label: m.common.nav.campaign },
     { href: "/harbor", label: m.common.nav.advanced },
     ...(armoryOpen ? [{ href: "/armory", label: m.common.nav.armory }] : []),

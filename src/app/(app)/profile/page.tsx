@@ -14,6 +14,11 @@ import { isHeroId } from "@/content/heroes";
 import { LoadoutFigure } from "@/components/overworld/LoadoutFigure";
 import { buildArmoryView } from "@/lib/armory-view";
 import { buildHeroView } from "@/lib/hero-view";
+import { ctfLevels } from "@/content/ctf";
+import { ctfTextFor } from "@/content/ctf/i18n";
+import { localizeCtfLevel } from "@/content/ctf/localize";
+import { buildTrophies } from "@/lib/ctf/trophies";
+import { CtfTrophies } from "@/components/ctf/CtfTrophies";
 
 // The Forgeborn's profile: identity, character progression and campaign
 // standing. The pouch (gold) only appears after the Phase 5 reveal —
@@ -24,7 +29,7 @@ export default async function ProfilePage() {
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
 
-  const [user, campaign, onboardingUnlock, armoryPieces] = await Promise.all([
+  const [user, campaign, onboardingUnlock, armoryPieces, ctfRows] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -38,6 +43,14 @@ export default async function ProfilePage() {
       where: { userId },
       select: { itemId: true, equipped: true },
     }),
+    // The trophy shelf is a bonus: if this query fails (e.g. the CtfProgress
+    // migration has not run yet) the profile must still load.
+    prisma.ctfProgress
+      .findMany({
+        where: { userId, solved: true },
+        select: { levelSlug: true, solvedAt: true },
+      })
+      .catch((): { levelSlug: string; solvedAt: Date | null }[] => []),
   ]);
   if (!user) redirect("/login");
 
@@ -52,6 +65,19 @@ export default async function ProfilePage() {
   const xp = user.character?.xp ?? 0;
   const heroId = user.character?.heroId;
   const heroName = isHeroId(heroId) ? m.overworld.heroes[heroId].name : "—";
+  // Safe trophy view: a flag is attached only to levels this user has solved.
+  const trophies = buildTrophies(
+    ctfLevels.map((level) => {
+      const localized = localizeCtfLevel(level, ctfTextFor(locale, level.slug));
+      return {
+        slug: level.slug,
+        title: localized.title,
+        difficulty: level.difficulty,
+        flag: level.flag,
+      };
+    }),
+    ctfRows,
+  );
   const armory = buildArmoryView({ gold: user.gold, pieces: armoryPieces });
 
   const providers =
@@ -333,6 +359,9 @@ export default async function ProfilePage() {
           </Link>
         </div>
       </div>
+
+      {/* ── CTF flags ── */}
+      <CtfTrophies trophies={trophies} locale={locale} m={m.ctf} />
     </div>
   );
 }

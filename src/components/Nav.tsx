@@ -37,6 +37,7 @@ export async function Nav() {
   const links = [
     ...(JOURNEY_LIVE ? [{ href: "/journey", label: m.common.nav.journey }] : []),
     { href: "/labs", label: m.common.nav.forge },
+    { href: "/ctf", label: m.common.nav.ctf },
     { href: "/campaign", label: m.common.nav.campaign },
     { href: "/harbor", label: m.common.nav.advanced },
     // The Armory appears with the pouch, never before: the hidden-currency

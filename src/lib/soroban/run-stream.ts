@@ -16,6 +16,8 @@ export const FORGE_ENDPOINT: Record<ForgeMode, string> = {
   build: `${RUNNER_BASE}/api/soroban/compile`,
   test: `${RUNNER_BASE}/api/soroban/test`,
   audit: `${RUNNER_BASE}/api/soroban/audit`,
+  // CTF runs use their own JSON route, not the NDJSON Forge transport.
+  ctf: `${RUNNER_BASE}/api/ctf/run`,
 };
 
 export interface ForgeStreamCallbacks {

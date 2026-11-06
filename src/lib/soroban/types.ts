@@ -1,8 +1,12 @@
 // Shared types for the Forge (Soroban IDE) pipeline. Isomorphic — types only.
 
-export type ForgeMode = "build" | "test" | "audit";
+export type ForgeMode = "build" | "test" | "audit" | "ctf";
 
-/** Repo-relative path → file contents. Only `Cargo.toml` and `src/**`. */
+/**
+ * Repo-relative path → file contents. Forge projects allow only `Cargo.toml`
+ * and `src/**`; CTF runs additionally carry the server-injected
+ * `tests/ctf.rs` harness.
+ */
 export type SorobanFileMap = Record<string, string>;
 
 /** One NDJSON line of a /api/soroban/{compile,test,audit} response stream. */

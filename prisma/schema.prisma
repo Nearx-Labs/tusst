@@ -42,6 +42,7 @@ model User {
   journeyProgress JourneyProgress[]
   xpEvents        XpEvent[]
   armory          ArmoryPiece[]
+  ctfProgress     CtfProgress[]
 }
 
 model Account {
@@ -308,9 +309,9 @@ model JourneyProgress {
 }
 
 // XP ledger. The unique constraint IS the anti-replay guard: one award per
-// (user, source, sourceKey), where source is "lesson" | "lab" | "journey" and
-// sourceKey the content slug. Character.xp/level are denormalized aggregates
-// written in the same transaction (src/lib/xp-award.ts).
+// (user, source, sourceKey), where source is "lesson" | "lab" | "journey" |
+// "ctf" and sourceKey the content slug. Character.xp/level are denormalized
+// aggregates written in the same transaction (src/lib/xp-award.ts).
 model XpEvent {
   id        String   @id @default(cuid())
   userId    String
@@ -359,4 +360,29 @@ model ArmoryPiece {
   // instead of charging twice (src/app/(app)/armory/actions.ts).
   @@unique([userId, itemId])
   @@index([userId, slot])
+}
+
+// ----------------------------------------------------------------------------
+// v4 — The Gauntlet (off-chain CTF)
+//
+// A level is pure TS content (src/content/ctf) keyed by slug: the vulnerable
+// contract, the hidden integration test and the flag live in code, server
+// only. This table tracks per-user state only. `attempts` counts every
+// authenticated run; `solved` flips once and is the source of truth for the
+// index card and the XP claim.
+// ----------------------------------------------------------------------------
+
+model CtfProgress {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  levelSlug String
+  attempts  Int       @default(0)
+  solved    Boolean   @default(false)
+  solvedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, levelSlug])
+  @@index([userId, solved])
 }

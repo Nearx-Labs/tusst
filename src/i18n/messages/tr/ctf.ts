@@ -1,17 +1,17 @@
 export const ctf = {
   metaTitle: "Arena — TUSST",
   metaDescription:
-    "Savunmasız Soroban sözleşmelerini kır. Kodu oku, exploit'i yaz ve Forge ile aynı sertleştirilmiş sandbox'ta çalıştır.",
+    "Paslı Ada'daki Aziz Stroop'un sözleşmelerini kır. Kodu oku, exploit'i yaz ve Forge ile aynı sertleştirilmiş sandbox'ta çalıştır.",
   kicker: "arena",
   title: "Kontratı Kır",
   intro:
-    "Soroban için Ethernaut. Her seviye gerçek bir hata içeren gerçek bir sözleşme, gizli bir test ve ancak exploit'in çalıştığında düşen bir flag'dir. Tek bir dosyayı düzenlersin; gerisini sandbox yapar.",
-  liveHeading: "// seviyeler",
+    "Aziz Stroop, Stroopbeholder'ın gözetiminde Paslı Ada'dadır ve oradaki her sözleşme bir hata saklar. Her görev gerçek bir sözleşme, gizli bir test ve ancak exploit'in çalıştığında düşen bir flag'dir. Tek bir dosyayı düzenlersin; gerisini sandbox yapar.",
+  liveHeading: "// görevler",
   card: {
     minutes: "{minutes} dk",
     xp: "{xp} xp",
     solved: "çözüldü",
-    start: "Seviyeye gir",
+    start: "Göreve gir",
     replay: "Tekrar oyna",
   },
   difficulty: {
@@ -39,7 +39,7 @@ export const ctf = {
     output: "Sandbox çıktısı",
     noOutput:
       "Henüz çıktı yok. Kodu oku, exploit'i yaz, sonra çalıştır.",
-    solved: "Seviye geçildi",
+    solved: "Görev geçildi",
     failed: "Kontrat dayandı — çıktıyı oku ve tekrar dene.",
     rejected: "Çalıştırılmadı: {line}. satırdaki “{token}” yasak. Seviye, testle oynayarak değil, bir kontrat çağrısıyla düşer.",
     timedOut: "Sandbox zaman aşımına uğradı. Birazdan tekrar dene.",
@@ -48,13 +48,13 @@ export const ctf = {
     signInToClaim: "XP almak için giriş yap.",
     signIn: "Giriş yap",
     flagLabel: "Flag",
-    flagHint: "Sakla. Seviyeyi kırdığının kanıtı.",
+    flagHint: "Sakla. Görevi kırdığının kanıtı.",
     xpEarned: "+{xp} xp",
     xpTotal: "toplam {xp} xp",
     levelUp: "Seviye {level}!",
     already: "Zaten alındı.",
     reset: "Başlangıca dön",
-    exit: "Seviyeden çık",
+    exit: "Görevden çık",
     compileHint: "Derleme hataları sandbox çıktısında görünür.",
   },
 };

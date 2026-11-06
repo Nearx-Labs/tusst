@@ -167,7 +167,7 @@ export const borrowedBadge: CtfLevel = {
   estMinutes: 15,
   story: `The toll collector of Saint Stroop checks every badge at the counter. Is it stamped? Is the signature fresh? Admirable diligence.
 
-He has never once asked whether the name on the badge is the name on the lease.`,
+The Stroopbeholder saw a stamp and looked away. The collector has never once asked whether the name on the badge is the name on the lease.`,
   brief: `## The target
 
 \`src/level.rs\` is a fee vault. At deployment it stores an admin and a pile of fees. \`withdraw_fees(admin)\` pays the fees to whoever is named as \`admin\`.

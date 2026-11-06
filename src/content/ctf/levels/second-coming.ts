@@ -126,7 +126,7 @@ export const secondComing: CtfLevel = {
   estMinutes: 10,
   story: `The Registry of Saint Stroop was deployed, initialized and forgotten. Its owner signed the deed on day one and has not looked at it since.
 
-Nobody ever asked whether the deed could be signed twice.`,
+The Stroopbeholder read the owner's signature a thousand times. Nobody asked whether the deed could be signed twice.`,
   brief: `## The target
 
 \`src/level.rs\` is a tiny registry. \`transfer_admin\` changes the admin and demands the current admin's signature. \`initialize\` is how the first admin gets named.

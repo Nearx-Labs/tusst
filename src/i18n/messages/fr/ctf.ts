@@ -1,17 +1,17 @@
 export const ctf = {
   metaTitle: "L'Arène — TUSST",
   metaDescription:
-    "Brisez des contrats Soroban vulnérables. Lisez le code, écrivez l'exploit et exécutez-le dans la même sandbox durcie que la Forge.",
+    "Brisez les contrats de Saint Stroop, sur l'Île Rouillée. Lisez le code, écrivez l'exploit et exécutez-le dans la même sandbox durcie que la Forge.",
   kicker: "l'arène",
   title: "Brisez le Contrat",
   intro:
-    "Ethernaut pour Soroban. Chaque niveau est un vrai contrat avec un vrai bug, un test caché et un flag qui ne tombe que lorsque votre exploit fonctionne. Vous modifiez un fichier ; la sandbox fait le reste.",
-  liveHeading: "// niveaux",
+    "Saint Stroop se trouve sur l'Île Rouillée, sous le regard du Stroopbeholder, et chaque contrat y cache un bug. Chaque mission est un vrai contrat, un test caché et un flag qui ne tombe que lorsque votre exploit fonctionne. Vous modifiez un fichier ; la sandbox fait le reste.",
+  liveHeading: "// missions",
   card: {
     minutes: "{minutes} min",
     xp: "{xp} xp",
     solved: "résolu",
-    start: "Entrer dans le niveau",
+    start: "Entrer dans la mission",
     replay: "Rejouer",
   },
   difficulty: {
@@ -39,7 +39,7 @@ export const ctf = {
     output: "Sortie de la sandbox",
     noOutput:
       "Aucune sortie pour l'instant. Lisez le code, écrivez l'exploit, puis lancez-le.",
-    solved: "Niveau réussi",
+    solved: "Mission réussie",
     failed: "Le contrat a tenu — lisez la sortie et réessayez.",
     rejected: "Non exécuté : « {token} » à la ligne {line} est interdit. Le niveau cède à un appel de contrat, pas en trafiquant le test.",
     timedOut: "La sandbox a expiré. Réessayez dans un instant.",
@@ -48,13 +48,13 @@ export const ctf = {
     signInToClaim: "Connectez-vous pour réclamer de l'XP.",
     signIn: "Se connecter",
     flagLabel: "Flag",
-    flagHint: "Gardez-le. C'est la preuve que vous avez brisé le niveau.",
+    flagHint: "Gardez-le. C'est la preuve que vous avez brisé la mission.",
     xpEarned: "+{xp} xp",
     xpTotal: "{xp} xp au total",
     levelUp: "Niveau {level} atteint !",
     already: "Déjà réclamé.",
     reset: "Rétablir le départ",
-    exit: "Quitter le niveau",
+    exit: "Quitter la mission",
     compileHint:
       "Les erreurs de compilation apparaissent dans la sortie de la sandbox.",
   },

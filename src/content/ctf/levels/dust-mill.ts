@@ -211,7 +211,7 @@ export const dustMill: CtfLevel = {
   estMinutes: 25,
   story: `The Dust Mill of Saint Stroop grinds deposits into shares. The miller is generous: when the numbers do not divide evenly, he rounds in the customer's favour. It is a kindness. It costs a fraction of a coin.
 
-A fraction of a coin, times a thousand customers, is a miller who is no longer rich.`,
+A fraction of a coin, times a thousand customers, is a miller who is no longer rich. The Stroopbeholder counts in whole coins; the dust escapes its many eyes.`,
   brief: `## The target
 
 \`src/level.rs\` is a pool. \`deposit(from, assets)\` turns assets into shares; \`redeem(from, shares)\` turns shares back into assets. The pool holds **1,500** and has issued **1,000** shares, all owned by \`victim\`, so every share is worth 1.5.

@@ -154,7 +154,7 @@ export const negativeSpace: CtfLevel = {
   estMinutes: 15,
   story: `The Coffer of Saint Stroop keeps honest books. Every transfer is checked: has the sender enough? If so, the numbers move.
 
-The clerk who wrote the check never imagined a customer asking to send less than nothing.`,
+The clerk who wrote the check never imagined a customer asking to send less than nothing. Raven, perched on the counter, did, and has been croaking about it ever since.`,
   brief: `## The target
 
 \`src/level.rs\` is a ledger. \`transfer(from, to, amount)\` makes \`from\` sign, checks \`from\` can afford \`amount\`, then moves it.

@@ -164,9 +164,9 @@ export const openGate: CtfLevel = {
     "A vault that asks the depositor to sign — and then lets anyone spend the deposit.",
   difficulty: "novice",
   estMinutes: 15,
-  story: `The Gate of Saint Stroop has stood for a hundred ledgers. Its keeper sleeps, its vault is full, and the only thing standing between the townsfolk and their savings is a single line of Rust that was never written.
+  story: `The Gate of Saint Stroop, on the Rusted Isle, has stood for a hundred ledgers. Its keeper sleeps, its vault is full, and the only thing standing between the townsfolk and their savings is a single line of Rust that was never written.
 
-You are the auditor the keeper never hired.`,
+The Stroopbeholder has hunted for it since the first ledger, and its many eyes cannot see an absence. You are the auditor the keeper never hired.`,
   brief: `## The target
 
 \`src/level.rs\` is a small vault. \`deposit\` asks the depositor for a signature. \`withdraw\` moves funds between two accounts — and asks for nothing.

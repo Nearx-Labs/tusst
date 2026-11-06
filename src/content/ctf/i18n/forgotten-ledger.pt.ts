@@ -7,7 +7,7 @@ export const forgottenLedgerText: CtfTextOverlay = {
   tagline:
     "Um selo único que expira em silêncio enquanto o contrato fica parado.",
   story:
-    "O Arquivo de São Stroop foi lacrado no dia em que abriu. O selo valia por um dia. Ninguém o renovou, porque ninguém lembrou que ele podia acabar.\n\nO arquivo parece exatamente o mesmo. O selo simplesmente sumiu.",
+    "O Arquivo de São Stroop foi lacrado no dia em que abriu. O selo valia por um dia. Ninguém o renovou, porque ninguém lembrou que ele podia acabar.\n\nO arquivo parece exatamente o mesmo. O selo simplesmente sumiu, e nem o Stroopbeholder consegue enxergar uma expiração.",
   brief:
     "## O alvo\n\n`src/level.rs` é um arquivo. `initialize` nomeia o admin e se recusa a rodar uma segunda vez. Ele lembra que já rodou numa entrada de storage **temporary**; o admin fica em storage **persistent**.\n\n## Sua tarefa\n\n`src/exploit.rs` exporta uma função:\n\n```rust\npub fn solve(env: &Env, vault: Address, victim: Address, attacker: Address)\n```\n\nO avaliador implanta o arquivo, o inicializa com `victim` como admin e remove todos os mocks de autorização. Um segundo `initialize` é recusado hoje. Faça o `attacker` virar o admin mesmo assim.\n\n## Regras\n\n- Você pode editar **apenas** `src/exploit.rs`. `Cargo.toml`, `src/lib.rs` e `src/level.rs` são fixos do nível.\n- Mantenha a assinatura de `solve` exatamente como está.\n- `attacker` não tem nenhuma assinatura. Numa rede real você não consegue mover o relógio; só pode esperar. O ambiente de teste deixa o `solve` fazer a espera.\n\n## Lendo o estado\n\n`admin()` é uma view pública. Use-a para conferir quem tem as chaves.",
   hints: [

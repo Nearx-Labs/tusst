@@ -3,17 +3,17 @@
 export const ctf = {
   metaTitle: "The Gauntlet — TUSST",
   metaDescription:
-    "Break vulnerable Soroban contracts. Read the source, write the exploit, run it in the same hardened sandbox as the Forge.",
+    "Break the contracts of Saint Stroop, on the Rusted Isle. Read the source, write the exploit, run it in the same hardened sandbox as the Forge.",
   kicker: "the gauntlet",
   title: "Break the Contract",
   intro:
-    "Ethernaut for Soroban. Every level is a real contract with a real bug, a hidden test, and a flag that only falls when your exploit does. You edit one file; the sandbox does the rest.",
-  liveHeading: "// levels",
+    "Saint Stroop sits on the Rusted Isle, under the gaze of the Stroopbeholder, and every contract in it hides a bug. Each mission is a real contract, a hidden test and a flag that only falls when your exploit does. You edit one file; the sandbox does the rest.",
+  liveHeading: "// missions",
   card: {
     minutes: "{minutes} min",
     xp: "{xp} xp",
     solved: "solved",
-    start: "Enter the level",
+    start: "Enter the mission",
     replay: "Replay",
   },
   difficulty: {
@@ -40,7 +40,7 @@ export const ctf = {
     running: "running in the sandbox…",
     output: "Sandbox output",
     noOutput: "No output yet. Read the source, write the exploit, then run it.",
-    solved: "Level cleared",
+    solved: "Mission cleared",
     failed: "The contract held — read the output and try again.",
     rejected: "Not run: “{token}” on line {line} is off-limits. The level falls to a contract call, not to tampering with the test.",
     timedOut: "The sandbox timed out. Try again in a moment.",
@@ -49,13 +49,13 @@ export const ctf = {
     signInToClaim: "Sign in to claim XP.",
     signIn: "Sign in",
     flagLabel: "Flag",
-    flagHint: "Keep it. It is the proof you broke the level.",
+    flagHint: "Keep it. It is the proof you broke the mission.",
     xpEarned: "+{xp} xp",
     xpTotal: "{xp} xp total",
     levelUp: "Level {level} reached!",
     already: "Already claimed.",
     reset: "Reset to starter",
-    exit: "Leave the level",
+    exit: "Leave the mission",
     compileHint: "Compile errors appear in the sandbox output.",
   },
 };

@@ -145,7 +145,7 @@ export const forgottenLedger: CtfLevel = {
   estMinutes: 25,
   story: `The Archive of Saint Stroop was sealed on the day it opened. The seal was good for a day. Nobody renewed it, because nobody remembered it could run out.
 
-The archive looks exactly as it did. The seal is simply gone.`,
+The archive looks exactly as it did. The seal is simply gone, and not even the Stroopbeholder can see an expiry.`,
   brief: `## The target
 
 \`src/level.rs\` is an archive. \`initialize\` names the admin and refuses to run a second time. It remembers that it already ran in a **temporary** storage entry; the admin lives in **persistent** storage.

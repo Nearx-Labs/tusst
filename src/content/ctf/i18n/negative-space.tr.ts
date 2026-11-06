@@ -7,7 +7,7 @@ export const negativeSpaceText: CtfTextOverlay = {
   tagline:
     "Göndericinin ödeyebildiğine bakan — ama tutarın gerçek olup olmadığına hiç bakmayan bir transfer.",
   story:
-    "Aziz Stroop Kasası dürüst defterler tutar. Her transfer kontrol edilir: gönderenin yeterli parası var mı? Varsa rakamlar yer değiştirir.\n\nKontrolü yazan katip, bir müşterinin hiçbir şeyden az göndermek isteyeceğini hiç düşünmedi.",
+    "Aziz Stroop Kasası dürüst defterler tutar. Her transfer kontrol edilir: gönderenin yeterli parası var mı? Varsa rakamlar yer değiştirir.\n\nKontrolü yazan katip, bir müşterinin hiçbir şeyden az göndermek isteyeceğini hiç düşünmedi. Tezgâhta tünemiş Raven düşündü ve o zamandan beri bu konuda gıakladı.",
   brief:
     "## Hedef\n\n`src/level.rs` bir defter. `transfer(from, to, amount)` `from`'a imza attırır, `from`'un `amount` tutarını karşılayabildiğini kontrol eder, sonra taşır.\n\n## Görevin\n\n`src/exploit.rs` tek bir fonksiyon dışa aktarır:\n\n```rust\npub fn solve(env: &Env, vault: Address, victim: Address, attacker: Address)\n```\n\nKasa `victim` için **1.000** tutuyor, `attacker` için hiçbir şey. Değerlendirici her çağrının imzalanmasına izin verir, sonra son durumu kontrol eder: `victim` **hâlâ** 1.000'e sahip olmalı ve `attacker` **en az 1.000**'e sahip olmalı.\n\n## Kurallar\n\n- Yalnızca `src/exploit.rs` dosyasını düzenleyebilirsin. `Cargo.toml`, `src/lib.rs` ve `src/level.rs` seviye tarafından sabitlenmiştir.\n- `solve` imzasını aynen koru.\n- Kurbanın paralarını almak onu daha yoksul bırakır, bu yüzden sayılmaz. Başka biri ödemek zorunda.\n\n## Ledger'ı okumak\n\n`balance_of(who)` herkese açık bir görünümdür. Her adres bakiyeye sahip olabilir, kasanın kendi adresi dahil.",
   hints: [

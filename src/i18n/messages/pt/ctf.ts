@@ -1,17 +1,17 @@
 export const ctf = {
   metaTitle: "A Arena — TUSST",
   metaDescription:
-    "Quebre contratos Soroban vulneráveis. Leia o código, escreva o exploit e rode na mesma sandbox endurecida da Forja.",
+    "Quebre os contratos de São Stroop, na Ilha Enferrujada. Leia o código, escreva o exploit e rode na mesma sandbox endurecida da Forja.",
   kicker: "a arena",
   title: "Quebre o Contrato",
   intro:
-    "Ethernaut para Soroban. Cada nível é um contrato real com um bug real, um teste oculto e uma flag que só cai quando seu exploit funciona. Você edita um arquivo; a sandbox faz o resto.",
-  liveHeading: "// níveis",
+    "São Stroop fica na Ilha Enferrujada, sob o olhar do Stroopbeholder, e cada contrato ali esconde um bug. Cada missão é um contrato real, um teste oculto e uma flag que só cai quando seu exploit funciona. Você edita um arquivo; a sandbox faz o resto.",
+  liveHeading: "// missões",
   card: {
     minutes: "{minutes} min",
     xp: "{xp} xp",
     solved: "resolvido",
-    start: "Entrar no nível",
+    start: "Entrar na missão",
     replay: "Repetir",
   },
   difficulty: {
@@ -39,7 +39,7 @@ export const ctf = {
     output: "Saída da sandbox",
     noOutput:
       "Nenhuma saída ainda. Leia o código, escreva o exploit e rode.",
-    solved: "Nível concluído",
+    solved: "Missão concluída",
     failed: "O contrato resistiu — leia a saída e tente de novo.",
     rejected: "Não executado: “{token}” na linha {line} é proibido. O nível cai com uma chamada ao contrato, não adulterando o teste.",
     timedOut: "A sandbox estourou o tempo. Tente de novo em instantes.",
@@ -48,13 +48,13 @@ export const ctf = {
     signInToClaim: "Entre para resgatar XP.",
     signIn: "Entrar",
     flagLabel: "Flag",
-    flagHint: "Guarde. É a prova de que você quebrou o nível.",
+    flagHint: "Guarde. É a prova de que você quebrou a missão.",
     xpEarned: "+{xp} xp",
     xpTotal: "{xp} xp no total",
     levelUp: "Nível {level} alcançado!",
     already: "Já resgatado.",
     reset: "Restaurar o inicial",
-    exit: "Sair do nível",
+    exit: "Sair da missão",
     compileHint: "Erros de compilação aparecem na saída da sandbox.",
   },
 };
